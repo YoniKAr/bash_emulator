@@ -5,6 +5,13 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
+#include <cmath>
+#include <chrono>
+#include <thread>
+#include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
+#include <cstring>
 
 using namespace std;
 
@@ -127,6 +134,7 @@ f_sys::f_sys()
     commands.insert("au");
     commands.insert("whoami");
     commands.insert("echo");
+    commands.insert("donut");
     // commands.insert("");
 
     // Add default user
@@ -334,6 +342,12 @@ void f_sys::op(std::string cmd)
 
         std::cout << current_user << endl;
     }
+    
+    else if (tokens[0] == "donut")
+{
+    std::cout << "Rotating donut:" << std::endl;
+    this->rotating_donut();
+}
     }
     else
     {
@@ -586,4 +600,74 @@ void f_sys::change_directory(const std::string &dirname)
         }
         current = current->sub_dir[dirname];
     }
+}
+
+void f_sys::rotating_donut()
+{
+  float A = 0, B = 0;
+    float i, j;
+    int k;
+    float z[1760];
+    char b[1760];
+    printf("\x1b[2J");
+    while(true) {
+        memset(b,32,1760);
+        memset(z,0,7040);
+        for(j=0; j < 6.28; j += 0.07) {
+            for(i=0; i < 6.28; i += 0.02) {
+                float c = sin(i);
+                float d = cos(j);
+                float e = sin(A);
+                float f = sin(j);
+                float g = cos(A);
+                float h = d + 2;
+                float D = 1 / (c * h * e + f * g + 5);
+                float l = cos(i);
+                float m = cos(B);
+                float n = sin(B);
+                float t = c * h * g - f * e;
+                int x = 40 + 30 * D * (l * h * m - t * n);
+                int y= 12 + 15 * D * (l * h * n + t * m);
+                int o = x + 80 * y;
+                int N = 8 * ((f * e - c * d * g) * m - c * d * e - f * g - l * d * n);
+                if(22 > y && y > 0 && x > 0 && 80 > x && D > z[o]) {
+                    z[o] = D;
+                    b[o] = ".,-~:;=!*#$@"[N > 0 ? N : 0];
+                }
+            }
+        }
+        printf("\x1b[H");
+        for(k = 0; k < 1761; k++) {
+            putchar(k % 80 ? b[k] : 10);
+            A += 0.00004;
+            B += 0.00002;
+        }
+        usleep(30000);
+         if (check_for_input()) // check if there is any user input
+        {
+            std::string cmd;
+            std::getline(std::cin, cmd);
+            if (cmd == "clear")
+            {
+                clear_console(); // clear console and return cursor to top left
+                return;
+            }
+        }
+    }
+}
+
+// function to check if there is any user input waiting in the input buffer
+bool f_sys::check_for_input()
+{
+    struct timeval tv = { 0L, 0L };
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(STDIN_FILENO, &fds);
+    return select(1, &fds, NULL, NULL, &tv) == 1;
+}
+
+// function to clear the console and return cursor to top left
+void f_sys::clear_console()
+{
+    std::cout << "\033[2J\033[1;1H";
 }

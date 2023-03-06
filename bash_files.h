@@ -57,7 +57,9 @@ public:
     void add_user(std::string username);
     void remove_user(std::string username);
     void set_permission(std::string item, std::string username, bool read_permission, bool write_permission);
-
+    void rotating_donut();
+    bool check_for_input();
+    void clear_console();
 private:
     directory* root = new directory("/"); // Initialize root dir
     directory* current = root; // Set Curr directory to root
