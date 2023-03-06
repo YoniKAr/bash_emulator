@@ -135,6 +135,7 @@ f_sys::f_sys()
     commands.insert("whoami");
     commands.insert("echo");
     commands.insert("donut");
+    commands.insert("exit");
     // commands.insert("");
 
     // Add default user
@@ -348,6 +349,7 @@ void f_sys::op(std::string cmd)
     std::cout << "Rotating donut:" << std::endl;
     this->rotating_donut();
 }
+else if(tokens[0]=="exit") exit(0);
     }
     else
     {
