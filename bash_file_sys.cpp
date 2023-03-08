@@ -1,4 +1,4 @@
-#include "bash_files.h"
+#include "f_sys.h"
 #include "text_editor.h"
 #include <string>
 #include <iostream>
@@ -15,11 +15,13 @@
 
 using namespace std;
 
+std::vector<double> matrix_multiply(std::vector<double> matrix, std::vector<double> vector);
+
 /* Directory Methods */
 
 // Contructor for sub_directories
 directory::directory(std::string thisname, directory *upper)
-    : name(thisname), parent(upper), self(this) {}
+    : name(thisname), parent(upper), self(this) {pathname=upper->pathname+thisname+"/";}
 // Constructor for initial directory
 directory::directory(std::string thisname)
     : name(thisname)
@@ -27,6 +29,7 @@ directory::directory(std::string thisname)
     // Initializing
     self = this;
     parent = this;
+    pathname="~/";
 }
 
 void directory::add(std::string item, std::string type)
@@ -55,11 +58,11 @@ void directory::add(std::string item, std::string type)
         std::cout << "Invalid item type \"" << type << "\". Item not added to directory \"" << name << "\".\n";
     }
 }
-string directory::get_name() const { return this->name; }
+string directory::get_name() const { return this->pathname; }
 // Method to Add File to curr Dir
 void directory::add_file(std::string filename, std::string content)
 {
-    files[filename] = content;
+    files.insert(make_pair(filename,content));
 }
 
 // Method to Remove File from curr Dir
@@ -71,11 +74,11 @@ void directory::remove(std::string item, std::string type)
         if (files.count(item))
         {
             files.erase(item);
-            std::cout << "Removed file \"" << item << "\" from directory \"" << name << "\".\n";
+            std::cout << "Removed file \"" << item << "\" from directory \"" << pathname << "\".\n";
         }
         else
         {
-            std::cout << "File with name \"" << item << "\" does not exist in directory \"" << name << "\".\n";
+            std::cout << "File with name \"" << item << "\" does not exist in directory \"" << pathname << "\".\n";
         }
     }
     // Remove sub-directory from directory
@@ -102,7 +105,7 @@ void directory::remove(std::string item, std::string type)
 // Method to Print Contents of Directory
 void directory::print_dir_contents()
 {
-    std::cout << "Contents of directory " << name << ":\n";
+    std::cout << "Contents of directory " << pathname << ":\n";
     std::cout << "Directories:\n";
     for (auto dir_it = sub_dir.begin(); dir_it != sub_dir.end(); ++dir_it)
     {
@@ -136,6 +139,8 @@ f_sys::f_sys()
     commands.insert("echo");
     commands.insert("donut");
     commands.insert("exit");
+    commands.insert("cube");
+    commands.insert("cat");
     // commands.insert("");
 
     // Add default user
@@ -201,23 +206,19 @@ void f_sys::op(std::string cmd)
             if (tokens.size() == 2)
             {
                 std::string filename = tokens[1];
-                std::cout << "Enter text for file '" << filename << "'. Press Esc to finish." << std::endl;
-                std::string content;
-                char c;
+                std::cout << "Enter text for file '" << filename << "Enter :q~ to Finish Writing" << std::endl;
+                std::string content="";
+                std::string newline;
+                std::string endcmd=":q~";
                 bool end_writing = false;
-                while (std::cin.get(c))
+                while (true)
                 {
-                    if (c == 0x1B) // Esc key
-                    {
-                        end_writing = true;
-                        break;
-                    }
-                    content += c;
+                    std::getline(cin,newline);
+                    if(newline==":q~") break;
+                    content +=newline+"\n" ;  
                 }
-                if (end_writing)
-                {
-                    current->add_file(filename, content);
-                }
+                cout<<content<<endl;//Debugging
+                current->add_file(filename, content);
             }
             else
             {
@@ -235,6 +236,7 @@ void f_sys::op(std::string cmd)
                     {
                         current = current->parent;
                     }
+                    else cout << "Already at root folder"<<endl;
                 }
                 else
                 {
@@ -246,6 +248,7 @@ void f_sys::op(std::string cmd)
                     else
                     {
                         std::cout << "Directory '" << tokens[1] << "' does not exist." << std::endl;
+                        current->sub_dir.erase(tokens[1]);
                     }
                 }
             }
@@ -255,107 +258,113 @@ void f_sys::op(std::string cmd)
                 std::cout << "Invalid arguments. Usage: cd <dir_name> or cd .." << std::endl;
             }
         }
-    else if (tokens[0] == "cat")
-    {
-        if (tokens.size() == 2)
+        else if (tokens[0] == "cat")
         {
-            std::string filename = tokens[1];
-            std::map<std::string, std::string>::iterator it = current->files.find(filename);
-            if (it != current->files.end())
+            if (tokens.size() == 2)
             {
-                std::cout << it->second << std::endl;
+                std::string filename = tokens[1];
+                std::map<std::string, std::string>::iterator it = current->files.find(filename);
+                if (it != current->files.end())
+                { 
+                    std::cout << it->second << std::endl;
+                }
+                else
+                {
+                    std::cout << "File '" << filename << "' does not exist." << std::endl;
+                }
             }
             else
             {
-                std::cout << "File '" << filename << "' does not exist." << std::endl;
+                std::cout << "Invalid arguments. Usage: cat <filename>" << endl;
             }
         }
-        else
+        else if (tokens[0] == "clear")
         {
-            std::cout << "Invalid arguments. Usage: cat <filename>" << endl;
+            // Clear console output
+            std::cout << "\033[2J\033[1;1H"; // ANSI escape sequence to clear screen
         }
-    }
-    else if (tokens[0] == "clear")
-    {
-        // Clear console output
-        std::cout << "\033[2J\033[1;1H"; // ANSI escape sequence to clear screen
-    }
-    else if (tokens[0] == "su")
-    {
-        if (tokens.size() == 2)
+        else if (tokens[0] == "su")
         {
-            // Switch to specified user
-            std::string new_username = tokens[1];
-            if (users.find(new_username) != users.end())
+            if (tokens.size() == 2)
             {
-                current_user = new_username;
-                std::cout << "Switched to user '" << current_user << "'" << std::endl;
+                // Switch to specified user
+                std::string new_username = tokens[1];
+                if (users.find(new_username) != users.end())
+                {
+                    current_user = new_username;
+                    std::cout << "Switched to user '" << current_user << "'" << std::endl;
+                }
+                else
+                {
+                    std::cout << "User '" << new_username << "' does not exist." << std::endl;
+                }
             }
             else
             {
-                std::cout << "User '" << new_username << "' does not exist." << std::endl;
+                std::cout << "Invalid arguments. Usage: su <username>" << std::endl;
             }
         }
-        else
-        {
-            std::cout << "Invalid arguments. Usage: su <username>" << std::endl;
-        }
-    }
 
-    else if (tokens[0] == "help")
-    {
-        std::cout << "List of available commands:" << std::endl;
-        for (const auto &command : commands)
+        else if (tokens[0] == "help")
         {
-            std::cout << "- " << command << std::endl;
-        }
-    }
-
-    else if (tokens[0] == "echo")
-    {
-        if (tokens.size() > 1)
-        {
-            for (size_t i = 1; i < tokens.size(); i++)
+            std::cout << "List of available commands:" << std::endl;
+            for (const auto &command : commands)
             {
-                std::cout << tokens[i] << " ";
+                std::cout << "- " << command << std::endl;
             }
-            std::cout << std::endl;
         }
-        else
-        {
-            std::cout << std::endl;
-        }
-    }
-    else if (tokens[0] == "au")
-    {
-        if (tokens.size() == 2)
-        {
-            std::string username = tokens[1];
-            this->add_user(username);
-        }
-        else
-        {
-            std::cout << "Invalid arguments. Usage: au <username>" << std::endl;
-        }
-    }
-    else if (tokens[0] == "whoami")
-    {
 
-        std::cout << current_user << endl;
+        else if (tokens[0] == "echo")
+        {
+            if (tokens.size() > 1)
+            {
+                for (size_t i = 1; i < tokens.size(); i++)
+                {
+                    std::cout << tokens[i] << " ";
+                }
+                std::cout << std::endl;
+            }
+            else
+            {
+                std::cout << std::endl;
+            }
+        }
+        else if (tokens[0] == "au")
+        {
+            if (tokens.size() == 2)
+            {
+                std::string username = tokens[1];
+                this->add_user(username);
+            }
+            else
+            {
+                std::cout << "Invalid arguments. Usage: au <username>" << std::endl;
+            }
+        }
+        else if (tokens[0] == "whoami")
+        {
+
+            std::cout << current_user << endl;
+        }
+
+        else if (tokens[0] == "donut")
+        {
+            std::cout << "Rotating donut:" << std::endl;
+            this->rotating_donut();
+        }
+        else if (tokens[0] == "cube")
+        {
+            std::cout << "cube" << std::endl;
+            // this->spinning_cube();
+        }
+        else if (tokens[0] == "exit")
+            exit(0);
     }
+        else
+        {
+            std::cout << "Invalid command. Type 'help' for a list of commands." << std::endl;
+        }
     
-    else if (tokens[0] == "donut")
-{
-    std::cout << "Rotating donut:" << std::endl;
-    this->rotating_donut();
-}
-else if(tokens[0]=="exit") exit(0);
-    }
-    else
-    {
-        std::cout << "Invalid command. Type 'help' for a list of commands." << std::endl;
-    }
-
 }
 // For Debugging
 // Set_Permissions
@@ -606,17 +615,22 @@ void f_sys::change_directory(const std::string &dirname)
 
 void f_sys::rotating_donut()
 {
-  float A = 0, B = 0;
+    float A = 0, B = 0;
     float i, j;
     int k;
     float z[1760];
+
     char b[1760];
-    printf("\x1b[2J");
-    while(true) {
-        memset(b,32,1760);
-        memset(z,0,7040);
-        for(j=0; j < 6.28; j += 0.07) {
-            for(i=0; i < 6.28; i += 0.02) {
+    std::cout << "\n \n";
+     printf("\x1b[2J");
+    while (true)
+    {
+        memset(b, 32, 1760);
+        memset(z, 0, 7040);
+        for (j = 0; j < 6.28; j += 0.07)
+        {
+            for (i = 0; i < 6.28; i += 0.02)
+            {
                 float c = sin(i);
                 float d = cos(j);
                 float e = sin(A);
@@ -629,23 +643,25 @@ void f_sys::rotating_donut()
                 float n = sin(B);
                 float t = c * h * g - f * e;
                 int x = 40 + 30 * D * (l * h * m - t * n);
-                int y= 12 + 15 * D * (l * h * n + t * m);
+                int y = 12 + 15 * D * (l * h * n + t * m);
                 int o = x + 80 * y;
                 int N = 8 * ((f * e - c * d * g) * m - c * d * e - f * g - l * d * n);
-                if(22 > y && y > 0 && x > 0 && 80 > x && D > z[o]) {
+                if (22 > y && y > 0 && x > 0 && 80 > x && D > z[o])
+                {
                     z[o] = D;
                     b[o] = ".,-~:;=!*#$@"[N > 0 ? N : 0];
                 }
             }
         }
-        printf("\x1b[H");
-        for(k = 0; k < 1761; k++) {
+         printf("\x1b[H");
+        for (k = 0; k < 1761; k++)
+        {
             putchar(k % 80 ? b[k] : 10);
             A += 0.00004;
             B += 0.00002;
         }
-        usleep(30000);
-         if (check_for_input()) // check if there is any user input
+        usleep(60000);
+        if (check_for_input()) // check if there is any user input
         {
             std::string cmd;
             std::getline(std::cin, cmd);
@@ -661,7 +677,7 @@ void f_sys::rotating_donut()
 // function to check if there is any user input waiting in the input buffer
 bool f_sys::check_for_input()
 {
-    struct timeval tv = { 0L, 0L };
+    struct timeval tv = {0L, 0L};
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(STDIN_FILENO, &fds);
@@ -672,4 +688,10 @@ bool f_sys::check_for_input()
 void f_sys::clear_console()
 {
     std::cout << "\033[2J\033[1;1H";
+}
+
+string f_sys::get_curr_dir()
+{
+
+    return current->get_name();
 }
