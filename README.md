@@ -1,6 +1,10 @@
 # terminal_emulator
 A C++ based App/Project to emulate bash-Terminal
 
+cd to .build and enter make to compile
+
+./emulator to run
+
 current command list:
 
 help - Will List All Current Commands
