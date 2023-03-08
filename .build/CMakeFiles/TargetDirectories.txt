@@ -1,0 +1,3 @@
+/home/ubuntu/Personal/bash_emulator/build/CMakeFiles/emulator.dir
+/home/ubuntu/Personal/bash_emulator/build/CMakeFiles/edit_cache.dir
+/home/ubuntu/Personal/bash_emulator/build/CMakeFiles/rebuild_cache.dir

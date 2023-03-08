@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/main.dir/emulator.cpp.o -o main 

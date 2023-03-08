@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/emulator.dir/emulator.cpp.o CMakeFiles/emulator.dir/terminal.cpp.o CMakeFiles/emulator.dir/bash_file_sys.cpp.o -o emulator 
