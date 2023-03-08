@@ -1,5 +1,5 @@
 #include "f_sys.h"
-#include "text_editor.h"
+//#include "text_editor.h"
 #include <string>
 #include <iostream>
 #include <vector>
