@@ -2,7 +2,7 @@
 #include "terminal.h"
 //#include "text_editor.h"
 #include <string>
-#include <iostream>
+#include <iostream> //Maybe Remove Some Dependencies
 #include <vector>
 #include <sstream>
 #include <fstream>
