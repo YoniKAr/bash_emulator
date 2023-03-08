@@ -1,7 +1,11 @@
 # terminal_emulator
 A C++ based App/Project to emulate bash-Terminal
 
-cd to .build and enter make to compile
+Running Instructions:
+CMake:cd to .build and enter make to compile
+
+General UNIX(Linux/Mac) Can also Just Enter Make in terminal in main-directory
+
 
 ./emulator to run
 
